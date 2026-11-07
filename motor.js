@@ -97,14 +97,15 @@ const Motor = (() => {
     o.tahminSayisi = 0;
     o.bitis = Date.now() + o.ayar.sure * 1000;
     olay('anlatim', { sira: o.sira, turNo: o.turNo });
-    // Kaptan süresinde ipucu vermezse sıra karşı takıma geçer
+    // Süre dolunca anlatıcının ekranı çizimi olduğu gibi gönderir (ağ için 3 sn pay).
+    // Hiçbir şey gelmezse (boş tuval / bağlantı yok) sıra karşı takıma geçer.
     zamanlayici = setTimeout(() => {
       if (o.asama !== 'anlatim') return;
       olay('sureDoldu', { takim: o.sira });
       o.gecmis.push({ turNo: o.turNo, takim: o.sira, sayi: 0, metin: null, cizim: false, acilanlar: [], bos: true });
       o.sira = karsi(o.sira);
       zamanlayici = setTimeout(turBasla, 1500);
-    }, o.ayar.sure * 1000 + 1500);
+    }, o.ayar.sure * 1000 + 3000);
   }
 
   const kaptanMi = (id, takim) => { const p = oyuncu(id); return p && p.kaptan && p.takim === takim; };
@@ -169,9 +170,9 @@ const Motor = (() => {
     return true;
   }
 
-  // Tahminciler turu bitirir (en az bir tahminden sonra)
+  // Tahminciler pas der / turu bitirir (hiç tahmin yapmadan da olur)
   function turuBitir(id) {
-    if (!o || o.asama !== 'tahmin' || !tahminciMi(id, o.sira) || !o.tahminSayisi) return false;
+    if (!o || o.asama !== 'tahmin' || !tahminciMi(id, o.sira)) return false;
     olay('turBitti', { takim: o.sira, kim: id });
     o.asama = 'gecis';
     o.sira = karsi(o.sira);

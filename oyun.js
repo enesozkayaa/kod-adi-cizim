@@ -228,7 +228,7 @@ function ciz() {
   $('tahminPaneli').hidden = !tahmincim;
   if (tahmincim) {
     $('tahminYazi').textContent = 'Kelimeye dokun: işaretlenir (takımın görür). Emin olunca “✅ Bu kelime!” de.';
-    $('bitirBtn').disabled = !d.tahminSayisi;
+    $('bitirBtn').disabled = false;
   }
 }
 
@@ -384,4 +384,21 @@ setInterval(() => {
   $('sure').style.width = `${oran * 100}%`;
   const ben = benimOyuncu();
   if (d.asama === 'anlatim' && ben?.kaptan && ben.takim === d.sira && oran < 0.15 && Math.round(Date.now() / 250) % 4 === 0) Ses.tikTak();
+  // Süre doldu: çizim (ya da yazılan ipucu) son haliyle kendiliğinden gider
+  if (d.asama === 'anlatim' && ben?.kaptan && ben.takim === d.sira && Date.now() >= d.bitis - 250 && ui.otomatikTur !== d.turNo) {
+    ui.otomatikTur = d.turNo;
+    if (d.ayar.anlatim === 'cizim') {
+      if (cizgiler.length) {
+        Ag.cizimGonder(cizimResmi(), ui.secilenSayi);
+        mesaj(`⏰ Süre doldu! Çizimin bu haliyle gönderildi (${ui.secilenSayi} kelime)`, '', 2600);
+      }
+    } else {
+      const metin = $('ipucuYazi').value.trim();
+      if (metin && !d.kelimeler.some(k => !k.acik && k.k === metin.toLocaleUpperCase('tr'))) {
+        Ag.eylem('ipucu', ui.secilenSayi, metin.split(/\s+/)[0], false);
+        $('ipucuYazi').value = '';
+        mesaj(`⏰ Süre doldu! Yazdığın ipucu gönderildi (${ui.secilenSayi} kelime)`, '', 2600);
+      }
+    }
+  }
 }, 250);
