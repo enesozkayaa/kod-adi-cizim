@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!--
+  Kod Adı Çizim - uygulama simgesini çizer: renkli kelime kartları tahtası + kalem.
+  Adres sonuna ?boyut=512&pay=0.08 yazılır (pay: kenar boşluğu; "maskable" simgede daha büyük).
+  PNG için: msedge --headless --hide-scrollbars --window-size=512,512 --screenshot=ikonlar/ikon-512.png "file:///.../araclar/ikon-ciz.html?boyut=512&pay=0.08"
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<style>html, body { margin: 0; background: #2a170c; overflow: hidden; } canvas { display: block; }</style>
+</head>
+<body>
+<script>
+  const ayar = new URLSearchParams(location.search);
+  const boyut = +(ayar.get('boyut') || 512);
+  const pay = +(ayar.get('pay') || 0.08);
+  const c = document.createElement('canvas');
+  c.width = c.height = boyut;
+  document.body.appendChild(c);
+  const g = c.getContext('2d');
+  g.scale(boyut / 512, boyut / 512);
+
+  const arka = g.createRadialGradient(256, 220, 30, 256, 256, 400);
+  arka.addColorStop(0, '#7a4a22');
+  arka.addColorStop(1, '#1e0f06');
+  g.fillStyle = arka;
+  g.fillRect(0, 0, 512, 512);
+
+  g.save();
+  const k = 1 - pay;
+  g.translate(256, 256); g.scale(k, k); g.translate(-256, -256);
+
+  // 3x3 kart tahtası
+  const renk = ['#e0453a', '#f3ead2', '#2f7de1', '#2f7de1', '#e0453a', '#f3ead2', '#f3ead2', '#2f7de1', '#e0453a'];
+  for (let i = 0; i < 9; i++) {
+    const x = 70 + (i % 3) * 128, y = 70 + Math.floor(i / 3) * 128;
+    g.shadowColor = '#0008'; g.shadowBlur = 14; g.shadowOffsetY = 6;
+    g.fillStyle = renk[i]; g.beginPath(); g.roundRect(x, y, 116, 116, 18); g.fill();
+    g.shadowColor = 'transparent';
+    g.fillStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.roundRect(x + 8, y + 8, 100, 30, 10); g.fill();
+  }
+  // ortadaki kart: kurukafa
+  g.fillStyle = '#26201c'; g.beginPath(); g.roundRect(198, 198, 116, 116, 18); g.fill();
+  g.fillStyle = '#f3ead2';
+  g.beginPath(); g.arc(256, 248, 30, 0, 7); g.fill();
+  g.fillRect(238, 262, 36, 26);
+  g.fillStyle = '#26201c';
+  g.beginPath(); g.arc(244, 248, 8, 0, 7); g.arc(268, 248, 8, 0, 7); g.fill();
+  g.fillRect(247, 276, 4, 12); g.fillRect(261, 276, 4, 12);
+
+  // kalem
+  g.save(); g.translate(418, 410); g.scale(0.7, 0.7); g.rotate(-0.8);
+  g.shadowColor = '#000a'; g.shadowBlur = 18; g.shadowOffsetY = 8;
+  g.fillStyle = '#f5c242'; g.fillRect(-26, -150, 52, 190);
+  g.shadowColor = 'transparent';
+  g.fillStyle = '#e8a92a'; g.fillRect(-26, -150, 17, 190);
+  g.fillStyle = '#f08aa0'; g.beginPath(); g.roundRect(-26, -190, 52, 34, 8); g.fill();
+  g.fillStyle = '#b8b8b8'; g.fillRect(-26, -160, 52, 14);
+  g.fillStyle = '#f1d3a8'; g.beginPath(); g.moveTo(-26, 40); g.lineTo(26, 40); g.lineTo(0, 100); g.closePath(); g.fill();
+  g.fillStyle = '#2a2a2a'; g.beginPath(); g.moveTo(-9, 79); g.lineTo(9, 79); g.lineTo(0, 100); g.closePath(); g.fill();
+  g.restore();
+  g.restore();
+</script>
+</body>
+</html>

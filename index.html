@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2a170c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Kod Adı Çizim</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="ikonlar/ikon-192.png">
+  <link rel="apple-touch-icon" href="ikonlar/ikon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ana menü + bekleme odası -->
+  <section id="menu">
+    <div class="kart">
+      <div class="baslikIkon">🎨🕵️</div>
+      <h1>Kod Adı Çizim</h1>
+      <p class="alt">Kaptan çizer, takım bulur. Ölümcül kelimeye dikkat! ☠️</p>
+      <p id="onlineSayi" hidden></p>
+      <div id="girisAlani">
+        <label>Adın <input id="adim" maxlength="12" placeholder="Adını yaz" autocomplete="off"></label>
+        <button id="odaKurBtn" class="buyuk">🏠 Oda kur</button>
+        <div class="katilSatiri">
+          <input id="odaKoduGir" maxlength="5" placeholder="Oda kodu" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button id="katilBtn">Katıl</button>
+        </div>
+        <button id="geriDonBtn" class="ikinciBtn" hidden></button>
+        <p class="not">Bot yok: arkadaşlarınla oynanır. En az 4 kişi (her takımda bir kaptan + en az bir tahminci). 🎤 ile sesli konuşabilirsiniz.</p>
+      </div>
+      <div id="onlineDurum"></div>
+      <!-- Bekleme odası -->
+      <div id="lobi" hidden>
+        <div class="odaKodu" id="lobiKod"></div>
+        <div class="takimlar">
+          <div class="takim tk"><h3>🔴 Kırmızı</h3><div id="lobiK"></div><button data-takim="k">Kırmızıya geç</button></div>
+          <div class="takim tm"><h3>🔵 Mavi</h3><div id="lobiM"></div><button data-takim="m">Maviye geç</button></div>
+        </div>
+        <button id="kaptanOlBtn" class="ikinciBtn">👑 Kaptan ol</button>
+        <div class="ayarlar">
+          <h3>⚙️ Oyun ayarları <small id="ayarNotu"></small></h3>
+          <div class="secenek" data-ayar="anlatim"><span>Anlatım</span><button data-deger="cizim">✏️ Çizerek</button><button data-deger="yazi">⌨️ Yazarak</button></div>
+          <div class="secenek" data-ayar="kelime"><span>Kelimeler</span><button data-deger="otomatik">🎲 Otomatik</button><button data-deger="kendi">✍️ Kendimiz yazalım</button></div>
+          <div class="secenek" data-ayar="sure"><span>Anlatma süresi</span><button data-deger="60">60 sn</button><button data-deger="90">90 sn</button><button data-deger="120">120 sn</button></div>
+        </div>
+        <button id="karistirBtn" class="ikinciBtn">🔀 Takımları karıştır</button>
+        <button id="baslatBtn" class="buyuk">▶️ Oyunu başlat</button>
+        <p id="baslatNot" class="not"></p>
+      </div>
+      <button id="odaIptalBtn" class="ikinciBtn" hidden>❌ Odayı kapat</button>
+      <details>
+        <summary>Nasıl oynanır?</summary>
+        <ul>
+          <li>Masada <b>25 kelime</b> var. İki takım var: 🔴 Kırmızı ve 🔵 Mavi. Her takımın bir <b>kaptanı</b> var.</li>
+          <li>Kelimelerin hangi takıma ait olduğunu <b>sadece kaptanlar</b> görür. Başlayan takımın 9, diğerinin 8 kelimesi var; 7 kelime nötr, <b>1 kelime ölümcül ☠️</b>.</li>
+          <li>Sırası gelen takımın kaptanı, takımının birkaç kelimesini anlatan <b>bir resim çizer</b> (ya da tek kelimelik bir ipucu yazar) ve kaç kelime anlattığını söyler. Harf ve rakam çizmek yasak!</li>
+          <li>Takım çizimi kaptan <b>“Gönder”</b>e basınca görür. Tahminciler kelimeleri işaretler, biri <b>“Bu kelime!”</b> deyince kelime açılır.</li>
+          <li>Kendi renginizse tahmine devam (en fazla söylenen sayı + 1). Nötr ya da rakip kelimeyse sıra geçer. <b>Ölümcül kelimeyi açan takım kaybeder!</b></li>
+          <li>Kendi kelimelerinin hepsini ilk bulan takım kazanır.</li>
+          <li>“Kendimiz yazalım” seçilirse oyun başında herkes birkaç kelime yazar, toplam 25 kelime olur.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <!-- Kelime yazma ("Kendimiz yazalım") -->
+  <section id="kelimeEkrani" class="perde" hidden>
+    <div class="kart">
+      <h2>✍️ Kelimelerini yaz</h2>
+      <p id="kelimeAciklama"></p>
+      <form id="kelimeForm"><div id="kelimeAlanlari"></div><button class="buyuk">📨 Gönder</button></form>
+      <div id="kelimeBekle"></div>
+      <div class="sureCubugu"><div id="kelimeSure"></div></div>
+    </div>
+  </section>
+
+  <!-- Oyun -->
+  <section id="oyun" hidden>
+    <header id="ust">
+      <button id="menuBtn" title="Ana menü">☰</button>
+      <div id="skor"></div>
+      <div class="sagDugmeler">
+        <span id="odaBilgisi" hidden></span>
+        <button id="sohbetBtn" title="Sohbet">💬<span id="okunmamis" hidden></span></button>
+        <button id="sesliBtn" title="Sesli sohbet">🎤</button>
+        <button id="sesBtn" title="Ses">🔊</button>
+      </div>
+    </header>
+    <div id="durumYazi"></div>
+    <div class="sureCubugu"><div id="sure"></div></div>
+    <main id="alan">
+      <div id="tahta"></div>
+      <aside id="yan">
+        <div id="ipucuKutusu"></div>
+        <div id="kaptanPaneli" hidden>
+          <div id="cizimAlani" hidden>
+            <canvas id="tuval" width="800" height="560"></canvas>
+            <div class="araclar">
+              <div id="renkler"></div>
+              <div class="kalinlik"><button data-k="4">•</button><button data-k="9" class="secili">●</button><button data-k="18">⬤</button></div>
+              <button id="silgiBtn" title="Silgi">🧽</button>
+              <button id="geriAlBtn" title="Geri al">↩️</button>
+              <button id="temizleBtn" title="Temizle">🗑️</button>
+            </div>
+          </div>
+          <div id="yaziAlani" hidden>
+            <input id="ipucuYazi" maxlength="18" placeholder="Tek kelimelik ipucu" autocomplete="off">
+          </div>
+          <div class="sayiSecim"><span>Kaç kelime?</span><div id="sayilar"></div></div>
+          <button id="gonderBtn" class="buyuk">📨 Gönder</button>
+          <p class="not">Harf ve rakam çizmek yasak! Takımın çizimini sen “Gönder”e basınca görecek.</p>
+        </div>
+        <div id="tahminPaneli" hidden>
+          <p id="tahminYazi"></p>
+          <button id="bitirBtn" class="ikinciBtn">⏭️ Turu bitir</button>
+        </div>
+      </aside>
+    </main>
+    <div id="mesaj"></div>
+  </section>
+
+  <!-- Oyun sonu -->
+  <section id="sonEkran" class="perde" hidden>
+    <div class="kart genis">
+      <h2 id="sonBaslik"></h2>
+      <p id="sonYazi"></p>
+      <h3>🖼️ Çizim galerisi</h3>
+      <div id="galeri"></div>
+      <button id="lobiyeDonBtn" class="buyuk">🔁 Aynı takımlarla tekrar</button>
+      <p id="sonBekle" class="not" hidden>⏳ Oda sahibi yeni oyunu başlatınca bekleme odasına döneceksiniz.</p>
+      <button id="sonKapatBtn" class="ikinciBtn">Tahtaya bak</button>
+    </div>
+  </section>
+
+  <!-- Sohbet -->
+  <section id="sohbetPaneli" class="perde" hidden>
+    <div class="kart">
+      <h2>💬 Sohbet</h2>
+      <div id="sohbetListe"></div>
+      <form id="sohbetForm"><input id="sohbetYazi" maxlength="140" placeholder="Mesaj yaz..." autocomplete="off"><button>Gönder</button></form>
+      <button id="sohbetKapat" class="ikinciBtn">Kapat</button>
+    </div>
+  </section>
+
+  <!-- Bağlantı koptu -->
+  <section id="baglantiEkrani" class="perde" hidden>
+    <div class="kart">
+      <h2>📡 Bağlantı koptu</h2>
+      <p>Oda sahibiyle bağlantın kesildi. İnternetin geldiyse yeniden bağlan; kaldığın yerden devam edersin.</p>
+      <button id="yenidenBaglanBtn" class="buyuk">🔁 Yeniden bağlan</button>
+      <button id="baglantiCikBtn" class="ikinciBtn">🏠 Ana menü</button>
+    </div>
+  </section>
+
+  <script src="ses.js"></script>
+  <script src="kelimeler.js"></script>
+  <script src="motor.js"></script>
+  <script src="oyun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="ag.js"></script>
+  <script src="sayac.js"></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');
+  </script>
+</body>
+</html>
