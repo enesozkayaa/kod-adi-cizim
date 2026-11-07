@@ -18,7 +18,7 @@
     <div class="kart">
       <div class="baslikIkon">🎨🕵️</div>
       <h1>Kod Adı Çizim</h1>
-      <p class="alt">Kaptan çizer, takım bulur. Ölümcül kelimeye dikkat! ☠️</p>
+      <p class="alt">Anlatıcı çizer, takım bulur. Ölümcül kelimeye dikkat! ☠️</p>
       <p id="onlineSayi" hidden></p>
       <div id="girisAlani">
         <label>Adın <input id="adim" maxlength="12" placeholder="Adını yaz" autocomplete="off"></label>
@@ -28,17 +28,23 @@
           <button id="katilBtn">Katıl</button>
         </div>
         <button id="geriDonBtn" class="ikinciBtn" hidden></button>
-        <p class="not">Bot yok: arkadaşlarınla oynanır. En az 4 kişi (her takımda bir kaptan + en az bir tahminci). 🎤 ile sesli konuşabilirsiniz.</p>
+        <p class="not">Bot yok: arkadaşlarınla oynanır. En az 4 kişi (her takımda bir anlatıcı + en az bir tahminci). 🎤 ile sesli konuşabilirsiniz.</p>
       </div>
       <div id="onlineDurum"></div>
       <!-- Bekleme odası -->
       <div id="lobi" hidden>
         <div class="odaKodu" id="lobiKod"></div>
         <div class="takimlar">
-          <div class="takim tk"><h3>🔴 Kırmızı</h3><div id="lobiK"></div><button data-takim="k">Kırmızıya geç</button></div>
-          <div class="takim tm"><h3>🔵 Mavi</h3><div id="lobiM"></div><button data-takim="m">Maviye geç</button></div>
+          <div class="takim tk"><h3>🔴 Kırmızı</h3>
+            <div class="rolBaslik">🎨 Anlatıcı</div><div id="lobiKA" class="yer"></div>
+            <div class="rolBaslik">🔍 Tahminciler</div><div id="lobiKT" class="yer"></div>
+          </div>
+          <div class="takim tm"><h3>🔵 Mavi</h3>
+            <div class="rolBaslik">🎨 Anlatıcı</div><div id="lobiMA" class="yer"></div>
+            <div class="rolBaslik">🔍 Tahminciler</div><div id="lobiMT" class="yer"></div>
+          </div>
         </div>
-        <button id="kaptanOlBtn" class="ikinciBtn">👑 Kaptan ol</button>
+        <p class="not">Takımında <b>anlatıcı</b> mı olacaksın, <b>tahminci</b> mi? Olmak istediğin yere dokun.</p>
         <div class="ayarlar">
           <h3>⚙️ Oyun ayarları <small id="ayarNotu"></small></h3>
           <div class="secenek" data-ayar="anlatim"><span>Anlatım</span><button data-deger="cizim">✏️ Çizerek</button><button data-deger="yazi">⌨️ Yazarak</button></div>
@@ -53,10 +59,10 @@
       <details>
         <summary>Nasıl oynanır?</summary>
         <ul>
-          <li>Masada <b>25 kelime</b> var. İki takım var: 🔴 Kırmızı ve 🔵 Mavi. Her takımın bir <b>kaptanı</b> var.</li>
-          <li>Kelimelerin hangi takıma ait olduğunu <b>sadece kaptanlar</b> görür. Başlayan takımın 9, diğerinin 8 kelimesi var; 7 kelime nötr, <b>1 kelime ölümcül ☠️</b>.</li>
-          <li>Sırası gelen takımın kaptanı, takımının birkaç kelimesini anlatan <b>bir resim çizer</b> (ya da tek kelimelik bir ipucu yazar) ve kaç kelime anlattığını söyler. Harf ve rakam çizmek yasak!</li>
-          <li>Takım çizimi kaptan <b>“Gönder”</b>e basınca görür. Tahminciler kelimeleri işaretler, biri <b>“Bu kelime!”</b> deyince kelime açılır.</li>
+          <li>Masada <b>25 kelime</b> var. İki takım var: 🔴 Kırmızı ve 🔵 Mavi. Her takımın bir <b>anlatıcısı</b> var, diğerleri <b>tahminci</b>.</li>
+          <li>Kelimelerin hangi takıma ait olduğunu <b>sadece anlatıcılar</b> görür. Başlayan takımın 9, diğerinin 8 kelimesi var; 7 kelime nötr, <b>1 kelime ölümcül ☠️</b>.</li>
+          <li>Sırası gelen takımın anlatıcısı, takımının birkaç kelimesini anlatan <b>bir resim çizer</b> (ya da tek kelimelik bir ipucu yazar) ve kaç kelime anlattığını söyler. Harf ve rakam çizmek yasak!</li>
+          <li>Takım çizimi anlatıcı <b>“Gönder”</b>e basınca görür. Tahminciler kelimeleri işaretler, biri <b>“Bu kelime!”</b> deyince kelime açılır.</li>
           <li>Kendi renginizse tahmine devam (en fazla söylenen sayı + 1). Nötr ya da rakip kelimeyse sıra geçer. <b>Ölümcül kelimeyi açan takım kaybeder!</b></li>
           <li>Kendi kelimelerinin hepsini ilk bulan takım kazanır.</li>
           <li>“Kendimiz yazalım” seçilirse oyun başında herkes birkaç kelime yazar, toplam 25 kelime olur.</li>

@@ -32,9 +32,19 @@ function ekranLobi() {
   $('lobi').hidden = false;
   const oy = ui.lobi || [];
   const ev = Ag.mod === 'ev';
-  const satir = p => `<div class="oyuncu${p.id === ui.benimId ? ' ben' : ''}${p.bagli ? '' : ' kopuk'}">${p.kaptan ? '👑 ' : ''}${guvenli(p.ad)}${p.id === ui.benimId ? ' <small>(sen)</small>' : ''}${p.kaptan ? ' <small>kaptan</small>' : ''}</div>`;
-  $('lobiK').innerHTML = oy.filter(p => p.takim === 'k').map(satir).join('') || '<div class="bos">kimse yok</div>';
-  $('lobiM').innerHTML = oy.filter(p => p.takim === 'm').map(satir).join('') || '<div class="bos">kimse yok</div>';
+  const satir = p => `<div class="oyuncu${p.id === ui.benimId ? ' ben' : ''}${p.bagli ? '' : ' kopuk'}">${guvenli(p.ad)}${p.id === ui.benimId ? ' <small>(sen)</small>' : ''}</div>`;
+  const ben = oy.find(p => p.id === ui.benimId);
+  ['k', 'm'].forEach(t => {
+    const harf = t.toUpperCase();
+    const anlatici = oy.find(p => p.takim === t && p.kaptan);
+    const benBurada = rol => ben && ben.takim === t && !!ben.kaptan === (rol === 'anlatici');
+    $(`lobi${harf}A`).innerHTML = anlatici
+      ? satir(anlatici) + (!anlatici.bagli && !benBurada('anlatici') ? `<button class="yerBtn" data-takim="${t}" data-rol="anlatici">🎨 Yerine geç</button>` : '')
+      : `<button class="yerBtn" data-takim="${t}" data-rol="anlatici">🎨 Anlatıcı ol</button>`;
+    const tahminciler = oy.filter(p => p.takim === t && !p.kaptan);
+    $(`lobi${harf}T`).innerHTML = (tahminciler.map(satir).join('') || '<div class="bos">henüz kimse yok</div>')
+      + (benBurada('tahminci') ? '' : `<button class="yerBtn" data-takim="${t}" data-rol="tahminci">🔍 Tahminci ol</button>`);
+  });
   $('lobiKod').innerHTML = `Oda kodu: <b>${guvenli($('odaBilgisi').textContent.replace('🔑 Oda ', ''))}</b><br><small>Arkadaşların bu kodu “Katıl” kısmına yazsın.</small>`;
   // Ayarlar (sadece oda sahibi değiştirir)
   document.querySelectorAll('.ayarlar .secenek').forEach(s => {
@@ -49,10 +59,14 @@ function ekranLobi() {
   const hazir = ['k', 'm'].every(t => oy.some(x => x.takim === t && x.kaptan) && oy.some(x => x.takim === t && !x.kaptan));
   $('baslatBtn').disabled = !hazir;
   $('baslatNot').textContent = hazir ? (ev ? 'Herkes hazırsa başlat!' : '⏳ Oda sahibinin başlatması bekleniyor…')
-    : 'Başlamak için her takımda bir kaptan ve en az bir tahminci olmalı (en az 4 kişi).';
+    : 'Başlamak için her takımda bir anlatıcı ve en az bir tahminci olmalı (en az 4 kişi).';
 }
-document.querySelectorAll('.takimlar button[data-takim]').forEach(b => b.addEventListener('click', () => { Ses.sec(); Ag.lobiEylemGonder('takim', b.dataset.takim); }));
-$('kaptanOlBtn').addEventListener('click', () => { Ses.sec(); Ag.lobiEylemGonder('kaptan'); });
+document.querySelector('.takimlar').addEventListener('click', e => {
+  const b = e.target.closest('.yerBtn');
+  if (!b) return;
+  Ses.sec();
+  Ag.lobiEylemGonder('yer', { takim: b.dataset.takim, rol: b.dataset.rol });
+});
 $('karistirBtn').addEventListener('click', () => { Ses.sec(); Ag.lobiEylemGonder('karistir'); });
 $('baslatBtn').addEventListener('click', () => Ag.oyunuBaslat());
 document.querySelectorAll('.ayarlar .secenek').forEach(s => s.addEventListener('click', e => {
@@ -93,7 +107,7 @@ function durumGeldi(d, olay) {
       if (ben?.kaptan && ben.takim === d.sira) {
         Ses.siraSende();
         mesaj(d.ayar.anlatim === 'cizim' ? '✏️ Sıra sende: takımına bir resim çiz!' : '⌨️ Sıra sende: tek kelimelik ipucu yaz!', 'iri', 2400);
-      } else mesaj(`${TAKIM_EMOJI[d.sira]} ${TAKIM_ADI[d.sira]} kaptanı ${d.ayar.anlatim === 'cizim' ? 'çiziyor' : 'düşünüyor'}…`, '', 2200);
+      } else mesaj(`${TAKIM_EMOJI[d.sira]} ${TAKIM_ADI[d.sira]} anlatıcısı ${d.ayar.anlatim === 'cizim' ? 'çiziyor' : 'düşünüyor'}…`, '', 2200);
       break;
     case 'ipucu':
       Ses.kartAc?.(1);
@@ -113,10 +127,10 @@ function durumGeldi(d, olay) {
       mesaj(`⏭️ ${TAKIM_ADI[olay.takim]} takım turu bitirdi`, '', 1800);
       break;
     case 'sureDoldu':
-      mesaj(`⏰ ${TAKIM_ADI[olay.takim]} kaptanının süresi doldu, sıra geçti`, 'kirmizi', 2400);
+      mesaj(`⏰ ${TAKIM_ADI[olay.takim]} anlatıcısının süresi doldu, sıra geçti`, 'kirmizi', 2400);
       break;
     case 'kaptanDegisti':
-      mesaj(`👑 ${adi(olay.id)} artık ${TAKIM_ADI[olay.takim]} takımın kaptanı`, '', 2400);
+      mesaj(`🎨 ${adi(olay.id)} artık ${TAKIM_ADI[olay.takim]} takımın anlatıcısı`, '', 2400);
       break;
     case 'bitti':
       setTimeout(sonuGoster, 600);
@@ -168,7 +182,7 @@ function ciz() {
   // Durum yazısı
   const takimAdi = `${TAKIM_EMOJI[d.sira]} ${TAKIM_ADI[d.sira]}`;
   $('durumYazi').innerHTML = d.asama === 'bitti' ? `🏆 ${TAKIM_EMOJI[d.kazanan]} ${TAKIM_ADI[d.kazanan]} takım kazandı!`
-    : d.asama === 'anlatim' ? (siradaKaptan ? '✏️ <b>Sıra sende!</b> İpucunu hazırla' : `${takimAdi} kaptanı ${d.ayar.anlatim === 'cizim' ? 'çiziyor' : 'düşünüyor'}…`)
+    : d.asama === 'anlatim' ? (siradaKaptan ? '✏️ <b>Sıra sende!</b> İpucunu hazırla' : `${takimAdi} anlatıcısı ${d.ayar.anlatim === 'cizim' ? 'çiziyor' : 'düşünüyor'}…`)
     : d.asama === 'tahmin' ? (tahmincim ? `🔍 <b>Tahmin sırası sizde!</b> Kalan hak: ${d.kalanTahmin}` : `${takimAdi} takım tahmin ediyor (kalan hak: ${d.kalanTahmin})`)
     : '…';
   $('durumYazi').className = `t${d.sira}`;
@@ -185,10 +199,10 @@ function ciz() {
   const ip = d.ipucu;
   if (ip && d.asama !== 'anlatim') {
     const resim = ui.cizimler[ip.turNo];
-    $('ipucuKutusu').innerHTML = `<div class="ipBaslik t${ip.takim}">${TAKIM_EMOJI[ip.takim]} ${TAKIM_ADI[ip.takim]} kaptanının ipucu</div>`
+    $('ipucuKutusu').innerHTML = `<div class="ipBaslik t${ip.takim}">${TAKIM_EMOJI[ip.takim]} ${TAKIM_ADI[ip.takim]} anlatıcısının ipucu</div>`
       + (ip.cizim ? (resim ? `<img class="ipResim" src="${resim}" alt="çizim">` : '<p>⏳ Çizim yükleniyor…</p>') : `<div class="ipYazi">${guvenli(ip.metin)}</div>`)
       + `<div class="ipSayi">${ip.sayi} kelime</div>`;
-  } else $('ipucuKutusu').innerHTML = d.asama === 'anlatim' && !siradaKaptan ? `<div class="bekliyor">${d.ayar.anlatim === 'cizim' ? '🎨' : '💭'} ${TAKIM_ADI[d.sira]} kaptanı hazırlıyor…<br><small>Çizim gönderilince burada görünecek</small></div>` : '';
+  } else $('ipucuKutusu').innerHTML = d.asama === 'anlatim' && !siradaKaptan ? `<div class="bekliyor">${d.ayar.anlatim === 'cizim' ? '🎨' : '💭'} ${TAKIM_ADI[d.sira]} anlatıcısı hazırlıyor…<br><small>Çizim gönderilince burada görünecek</small></div>` : '';
   $('ipucuKutusu').hidden = siradaKaptan;
   // Kaptan paneli
   $('kaptanPaneli').hidden = !siradaKaptan;

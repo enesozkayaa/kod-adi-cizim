@@ -13,7 +13,7 @@
 // =============================================================
 
 const Ag = (() => {
-  const SURUM = 1;
+  const SURUM = 2;
   const ODA_ONEKI = 'kod-adi-cizim-oda-';
   const KOD_HARFLERI = 'ABCDEFGHJKLMNPRSTUVYZ23456789';
   const NABIZ_ARALIGI = 3000, NABIZ_ZAMAN_ASIMI = 15000;
@@ -30,8 +30,9 @@ const Ag = (() => {
 
   let kimlik = '';
   try {
-    kimlik = localStorage.getItem(KIMLIK) || '';
-    if (!kimlik) localStorage.setItem(KIMLIK, (kimlik = Math.random().toString(36).slice(2, 12)));
+    // Her sekme ayrı oyuncu: kimlik sekmeye özel (sayfa yenilenince aynı kalır)
+    kimlik = sessionStorage.getItem(KIMLIK) || '';
+    if (!kimlik) sessionStorage.setItem(KIMLIK, (kimlik = Math.random().toString(36).slice(2, 12)));
   } catch (e) { kimlik = Math.random().toString(36).slice(2, 12); }
   // Aynı bilgisayarda birkaç sekmeyle denemek için: adrese ?kimlik=xxx yazılırsa o kullanılır
   const testKimlik = new URLSearchParams(location.search).get('kimlik');
@@ -116,7 +117,7 @@ const Ag = (() => {
       ag.mod = 'ev';
       ag.kod = kod;
       ag.ayar = ayarOku();
-      ag.oyuncular = [{ id: kimlik, ad, takim: 'k', kaptan: true, misafir: null }];
+      ag.oyuncular = [{ id: kimlik, ad, takim: 'k', kaptan: false, misafir: null }];
       ui.benimId = kimlik;
       kilitle();
       odaKodunuGoster();
@@ -163,14 +164,18 @@ const Ag = (() => {
   function lobiEylemi(id, ad, deger) {
     const p = ag.oyuncular.find(x => x.id === id);
     if (!p) return;
-    if (ad === 'takim' && ['k', 'm'].includes(deger) && !ag.basladi) {
-      p.takim = deger;
-      p.kaptan = false;
-      // takımda kaptan yoksa ilk gelen kaptan olur
-      if (!ag.oyuncular.some(x => x.takim === deger && x.kaptan && x !== p)) p.kaptan = true;
-    } else if (ad === 'kaptan' && !ag.basladi) {
-      ag.oyuncular.forEach(x => x.takim === p.takim && (x.kaptan = false));
-      p.kaptan = true;
+    if (ad === 'yer' && deger && ['k', 'm'].includes(deger.takim) && !ag.basladi) {
+      // Takımda iki yer var: 🎨 Anlatıcı (tek kişi) ve 🔍 Tahminciler
+      if (deger.rol === 'anlatici') {
+        const dolu = ag.oyuncular.find(x => x !== p && x.takim === deger.takim && x.kaptan);
+        if (dolu && (dolu.id === kimlik || dolu.misafir)) return;   // yer dolu
+        if (dolu) dolu.kaptan = false;                              // bağlantısı kopmuşsa yerini al
+        p.takim = deger.takim;
+        p.kaptan = true;
+      } else {
+        p.takim = deger.takim;
+        p.kaptan = false;
+      }
     } else if (ad === 'kaptan' && ag.basladi) {
       // Oyun sırasında: takımın kaptanı düştüyse yerine geçilebilir
       const kaptan = ag.oyuncular.find(x => x.takim === p.takim && x.kaptan);
@@ -213,7 +218,11 @@ const Ag = (() => {
     if (m.surum !== SURUM) return reddet('Uygulaman eski sürümde kalmış. Uygulamayı tamamen kapatıp yeniden aç, sonra tekrar katıl.');
     const ad = String(m.ad ?? '').trim().slice(0, 12) || 'Oyuncu';
     const kucuk = s => String(s).trim().toLocaleLowerCase('tr');
+    const yeniId = () => Math.random().toString(36).slice(2, 12);
     let p = ag.oyuncular.find(x => x.id === m.kimlik && x.id !== kimlik);
+    // Aynı kimlikle başka biri zaten bağlıysa (ör. aynı tarayıcıda iki sekme) bu yeni bir oyuncudur
+    if (p && p.misafir && p.misafir.baglanti.open && kucuk(p.ad) !== kucuk(ad)) { p = null; m.kimlik = yeniId(); }
+    if (m.kimlik === kimlik) m.kimlik = yeniId();
     if (!p && ag.basladi) p = ag.oyuncular.find(x => !x.misafir && x.id !== kimlik && kucuk(x.ad) === kucuk(ad));
     if (!p) {
       if (ag.basladi) return reddet('Oyun başlamış. Oyundan düşen bir oyuncuysan oyundaki adının aynısını yazıp tekrar katıl.');
@@ -221,7 +230,7 @@ const Ag = (() => {
       // Kişi sayısı az olan takıma girer
       const k = ag.oyuncular.filter(x => x.takim === 'k').length, mm = ag.oyuncular.filter(x => x.takim === 'm').length;
       const takim = k <= mm ? 'k' : 'm';
-      p = { id: m.kimlik || Math.random().toString(36).slice(2), ad, takim, kaptan: !ag.oyuncular.some(x => x.takim === takim && x.kaptan), misafir: null };
+      p = { id: m.kimlik || yeniId(), ad, takim, kaptan: false, misafir: null };
       ag.oyuncular.push(p);
     }
     if (p.misafir && p.misafir !== misafir) p.misafir.baglanti.close();
@@ -246,14 +255,7 @@ const Ag = (() => {
     p.ses = false;
     sesListesiYay();
     if (!ag.basladi) {
-      ag.oyuncular = ag.oyuncular.filter(x => x !== p);
-      // Kaptanı giden takıma yeni kaptan
-      ['k', 'm'].forEach(t => {
-        if (!ag.oyuncular.some(x => x.takim === t && x.kaptan)) {
-          const ilk = ag.oyuncular.find(x => x.takim === t);
-          if (ilk) ilk.kaptan = true;
-        }
-      });
+      ag.oyuncular = ag.oyuncular.filter(x => x !== p);   // anlatıcı giderse yer boşalır
     } else sohbetDagit('', `${p.ad} oyundan düştü. Aynı adla geri girerse kaldığı yerden devam eder.`);
     lobiyiYay();
   }
@@ -391,6 +393,7 @@ const Ag = (() => {
         return;
       }
       ui.benimId = m.id;
+      if (!testKimlik && m.id !== kimlik) { kimlik = m.id; try { sessionStorage.setItem(KIMLIK, kimlik); } catch (e) { /* yok */ } }
       odaKodunuGoster();
       try { sessionStorage.setItem(OTOMATIK_KATIL, JSON.stringify({ kod: ag.kod })); } catch (e) { /* yok */ }
       kayit(SON_ODA, { kod: ag.kod, zaman: Date.now() });
