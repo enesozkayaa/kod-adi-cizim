@@ -224,6 +224,7 @@ function ciz() {
     $('sayilar').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-n="${n}" class="${n === ui.secilenSayi ? 'secili' : ''}">${n}</button>`).join('');
   }
   $('alan').classList.toggle('cizimModu', siradaKaptan && d.ayar.anlatim === 'cizim');
+  gecmisCiz(d);
   // Tahminci paneli
   $('tahminPaneli').hidden = !tahmincim;
   if (tahmincim) {
@@ -231,6 +232,39 @@ function ciz() {
     $('bitirBtn').disabled = false;
   }
 }
+
+// Önceki hamleler: her ipucu (çizim / yazı) ve altında açılan kelimeler, en yenisi üstte
+const SONUC_ADI = { k: 'kırmızı', m: 'mavi', n: 'nötr', x: '☠️ ölümcül' };
+function gecmisKart(g2) {
+  const ust = `<div class="gcBaslik t${g2.takim}">${TAKIM_EMOJI[g2.takim]} ${TAKIM_ADI[g2.takim]}${g2.bos ? '' : ` · <b>${g2.sayi}</b> kelime`}</div>`;
+  if (g2.bos) return `<div class="gcKart t${g2.takim}">${ust}<div class="gcBos">⏰ Süre doldu, ipucu verilmedi</div></div>`;
+  const ipucu = g2.cizim
+    ? (ui.cizimler[g2.turNo] ? `<img src="${ui.cizimler[g2.turNo]}" data-tur="${g2.turNo}" alt="çizim">` : '<div class="gcBos">çizim yok</div>')
+    : `<div class="gcYazi">“${guvenli(g2.metin || '')}”</div>`;
+  const cevaplar = g2.acilanlar.length
+    ? g2.acilanlar.map(a => `<span class="gcCevap r${a.renk}" title="${SONUC_ADI[a.renk] || ''}">${guvenli(a.k)}</span>`).join('')
+    : '<span class="gcHic">hiç kelime açılmadı</span>';
+  return `<div class="gcKart t${g2.takim}">${ust}${ipucu}<div class="gcCevaplar">${cevaplar}</div></div>`;
+}
+function gecmisCiz(d) {
+  // şu an oynanan tur yukarıdaki ipucu kutusunda; burada sadece bitmiş turlar
+  const liste = (d.gecmis || []).filter(g2 => d.asama === 'bitti' || g2.turNo !== d.turNo).slice().reverse();
+  $('gecmisPaneli').hidden = !liste.length;
+  const html = liste.map(gecmisKart).join('');
+  if ($('gecmisListe').dataset.html !== html) {   // resimler her saniye yeniden yüklenmesin
+    $('gecmisListe').dataset.html = html;
+    $('gecmisListe').innerHTML = html;
+  }
+}
+$('gecmisListe').addEventListener('click', e => {
+  const img = e.target.closest('img[data-tur]');
+  if (!img) return;
+  const g2 = ui.durum?.gecmis.find(x => x.turNo === +img.dataset.tur);
+  $('buyukResimImg').src = img.src;
+  $('buyukResimYazi').innerHTML = g2 ? `${TAKIM_EMOJI[g2.takim]} ${g2.sayi} kelime · Açılan: ${g2.acilanlar.map(a => `<span class="gcCevap r${a.renk}">${guvenli(a.k)}</span>`).join(' ') || '–'}` : '';
+  $('buyukResim').hidden = false;
+});
+$('buyukResim').addEventListener('click', () => ($('buyukResim').hidden = true));
 
 $('tahta').addEventListener('click', e => {
   const sec = e.target.closest('button[data-sec]');

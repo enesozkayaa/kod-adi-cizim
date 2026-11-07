@@ -195,6 +195,29 @@ body { overflow-x: hidden; }
 #mesaj.iri { font-size: 26px; color: var(--altin); }
 #mesaj.kirmizi { color: #ff8a7a; }
 
+/* Oyun içi geçmiş */
+#gecmisPaneli { background: #0005; border-radius: 12px; padding: 6px 8px 8px; }
+#gecmisPaneli h4 { margin: 0 0 6px; color: var(--altin); font-size: 14px; }
+#gecmisPaneli h4 small { color: #fff9; font-weight: 400; font-size: 11px; }
+#gecmisListe { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }
+.gcKart { background: #fbf4e2; color: #2a1a0a; border-radius: 9px; padding: 5px; border: 3px solid; flex-shrink: 0; }
+.gcKart.tk { border-color: var(--kirmizi); }
+.gcKart.tm { border-color: var(--mavi); }
+.gcBaslik { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+.gcKart img { width: 100%; max-height: 150px; object-fit: contain; background: #fff; border-radius: 6px; display: block; cursor: zoom-in; }
+.gcYazi { font-size: 20px; font-weight: 800; text-align: center; padding: 4px 0; }
+.gcBos, .gcHic { font-size: 12px; opacity: .65; }
+.gcCevaplar { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.gcCevap { font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 6px; color: #fff; }
+.gcCevap.rk { background: var(--kirmizi); }
+.gcCevap.rm { background: var(--mavi); }
+.gcCevap.rn { background: #c9b98f; color: #3a2a12; }
+.gcCevap.rx { background: #111; }
+#buyukResim { cursor: zoom-out; flex-direction: column; gap: 8px; }
+#buyukResim:not([hidden]) { display: flex; }
+#buyukResimImg { max-width: 94vw; max-height: 78vh; background: #fff; border-radius: 10px; border: 4px solid var(--altin); }
+#buyukResimYazi { color: #fff; margin: 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; }
+
 /* Oyun sonu galerisi */
 #galeri { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; max-height: 50vh; overflow-y: auto; text-align: left; }
 .galeriKart { background: #fbf4e2; color: #2a1a0a; border-radius: 10px; padding: 6px; border: 3px solid; }
@@ -219,7 +242,14 @@ body { overflow-x: hidden; }
 /* Telefon */
 @media (max-width: 760px) {
   #alan, #alan.cizimModu { grid-template-columns: 1fr; }
-  #yan { order: -1; }   /* telefonda çizim/ipucu tahtanın üstünde */
+  /* telefonda çizim/ipucu tahtanın üstünde, önceki hamleler tahtanın altında */
+  #yan { display: contents; }
+  #yan > * { order: -1; }
+  #yan > #gecmisPaneli { order: 2; }
+  /* telefonda geçmiş yan yana kayan küçük kartlar */
+  #gecmisListe { flex-direction: row; overflow-x: auto; overflow-y: hidden; max-height: none; padding-bottom: 4px; }
+  .gcKart { width: 140px; }
+  .gcKart img { max-height: 90px; }
   .ipResim { width: auto; max-width: 100%; max-height: 30vh; margin: 0 auto; }
   #ipucuKutusu { padding: 6px; }
   .ipSayi { font-size: 18px; margin-top: 2px; }
