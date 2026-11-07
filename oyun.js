@@ -179,6 +179,18 @@ function ciz() {
   const tahmincim = d.asama === 'tahmin' && ben && !ben.kaptan && ben.takim === d.sira;
   // Skor
   $('skor').innerHTML = ['k', 'm'].map(t => `<span class="skorT t${t}${d.sira === t && d.asama !== 'bitti' ? ' sirada' : ''}">${TAKIM_EMOJI[t]} ${d.kalan[t]}</span>`).join('');
+  // Takımlar: kim hangi takımda, anlatıcı mı tahminci mi
+  const bagli = id => !d.baglilar || d.baglilar.includes(id);
+  $('takimSeridi').innerHTML = ['k', 'm'].map(t => {
+    const uyeler = d.oyuncular.filter(p => p.takim === t).sort((a, b) => b.kaptan - a.kaptan);
+    const benimki = ben?.takim === t;
+    const kisi = p => `<span class="uye${p.kaptan ? ' anlatici' : ''}${p.id === ui.benimId ? ' ben' : ''}${bagli(p.id) ? '' : ' kopuk'}">${p.kaptan ? '🎨' : '🔍'} ${guvenli(p.ad)}${p.id === ui.benimId ? ' <b>(sen)</b>' : ''}</span>`;
+    return `<div class="seritTakim t${t}${benimki ? ' benim' : ''}">
+      <div class="seritBaslik">${TAKIM_EMOJI[t]} ${TAKIM_ADI[t]}${benimki ? ` <span class="seninTakim">SEN: ${ben.kaptan ? '🎨 ANLATICI' : '🔍 TAHMİNCİ'}</span>` : ''}</div>
+      <div class="uyeler">${uyeler.map(kisi).join('')}</div></div>`;
+  }).join('');
+  $('oyun').classList.toggle('benK', ben?.takim === 'k');
+  $('oyun').classList.toggle('benM', ben?.takim === 'm');
   // Durum yazısı
   const takimAdi = `${TAKIM_EMOJI[d.sira]} ${TAKIM_ADI[d.sira]}`;
   $('durumYazi').innerHTML = d.asama === 'bitti' ? `🏆 ${TAKIM_EMOJI[d.kazanan]} ${TAKIM_ADI[d.kazanan]} takım kazandı!`
